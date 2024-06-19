@@ -195,38 +195,6 @@ def eval_maskmodel(net, test_loader, trainstart, trainend, mode, model, w0=0, w1
 
 
 
-def paintmask_predictlabel(all_data_loader, net, color_board, labels, savedir):
-    """生成着色图"""
-    out_color = np.zeros((labels.shape[0], labels.shape[1], 3))
-    out_labeledcolor = np.zeros((labels.shape[0], labels.shape[1], 3))
-
-    net.cuda()
-    net.eval()
-
-
-    for step, (img1_patch, img2_patch, gt_xy) in enumerate(all_data_loader):
-        with torch.no_grad():
-            output = net(img1_patch, img2_patch)
-        if isinstance(output, tuple):  # For multiple outputs
-            output = output[0]
-        pred_y = torch.max(output, 1)[1].cuda().data.squeeze()
-        pred_y_numpy = pred_y.cpu().numpy()
-
-
-    for i,j in np.argwhere(labels != 0):
-        cls = pred_y_numpy[i][j] + 1
-        out_labeledcolor[i][j] = color_board[cls]
-
-    for i in range(labels.shape[0]):
-        for j in range(labels.shape[1]):
-            cls = pred_y_numpy[i][j] + 1
-            out_color[i][j] = color_board[cls]
-
-    savelabeled_predict_img_path = savedir + 'showlabeled_result.png'
-    save_predict_img_path = savedir + 'show_result.png'
-    cv2.imwrite(savelabeled_predict_img_path, out_labeledcolor)
-    cv2.imwrite(save_predict_img_path, out_color)
-
 
 
 
