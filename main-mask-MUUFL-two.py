@@ -7,23 +7,13 @@ import torch_optimizer as optim
 from adabelief_pytorch import AdaBelief
 
 
-# MUUFL
 ColorBoard = np.array(
     [[0, 0, 0], [0, 127, 0], [0, 255, 0], [0, 255, 255], [255, 204, 0], [255, 0, 50], [0, 0, 205], [102, 0, 205], [255, 127, 153],  [203, 102, 0],
      [255, 255, 0], [204, 26, 10]]
 )
 
-# # 2013
-# ColorBoard = np.array(
-#         [[0, 0, 0], [76, 176, 58], [124, 192, 46], [63, 133, 88], [57, 133, 61], [139, 70, 46], [112, 195, 199], [255, 255, 255], [201, 169, 206],  [219, 39, 40],
-# [115, 32, 35], [59, 94, 171], [217, 225, 57], [215, 131, 37], [76, 43, 126], [228, 97, 77]])
 
-#
-
-# Augsburg
-# ColorBoard = np.array([[0, 0, 0], [41, 101, 58], [238, 44, 42], [235, 233, 79], [140, 198, 65], [151, 84, 55], [112, 190, 68], [123, 207, 216], [48, 121, 188]])
-
-ColorBoard = ColorBoard[:,(2,1,0)] #RGB转化成BGR
+ColorBoard = ColorBoard[:,(2,1,0)]
 
 
 def get_args():
@@ -61,15 +51,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.enabled = True
     args = get_args()
     device = torch.device(args.device)
-    tag = str(datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S"))
-    logdir = args.logdir + '/' + args.dataname + '/' + tag + '-' +  args.model + '/'
-    setlog(device, logdir)
-
-    print("**Basic Setting...")
-    logger.info("**Basic Setting...")
-    print('  ', args)
-    logging.info(args)
-
+  
     seed = 1234
 
 
@@ -81,8 +63,6 @@ if __name__ == "__main__":
 
 
     start_time = datetime.datetime.now().strftime('%F %T')
-    print("程序开始运行时间：" + start_time)
-    logger.info("程序开始运行时间：" + start_time)
 
 
     if args.dataset_mode == "fixed":
@@ -113,8 +93,6 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(net.parameters(), lr=args.LR, weight_decay=0.0005)
 
     trainstart = time.time()
-    print("训练开始时间：" + start_time)
-    logger.info("训练开始时间：" + start_time)
 
 
     for epoch in range(args.epochs):
@@ -148,9 +126,8 @@ if __name__ == "__main__":
                 net.eval()
                 img1_test, img2_test, label_t = next(valid_batch)
                 with torch.no_grad():
-                    # test_output = net(img1_test)  # net output
                     test_output = net(img1_test, img2_test)
-                if isinstance(test_output, tuple):  # For multiple outputs
+                if isinstance(test_output, tuple): 
                     test_output = test_output[0]
                 pred_y = torch.max(test_output, 1)[1].cuda().data
 
@@ -163,9 +140,6 @@ if __name__ == "__main__":
                 accuracy = ((pred_y.squeeze() == label_t.squeeze()) * mask_pred).sum() / num
 
                 print(
-                    '[Epoch:%3d] || step: %3d || LR: %.6f  || train loss: %.4f || train acc: %.4f || test acc: %.4f' % (
-                    epoch, step, optimizer.param_groups[0]['lr'], loss.item(), train_acc, accuracy))
-                logger.info(
                     '[Epoch:%3d] || step: %3d || LR: %.6f  || train loss: %.4f || train acc: %.4f || test acc: %.4f' % (
                     epoch, step, optimizer.param_groups[0]['lr'], loss.item(), train_acc, accuracy))
                 net.train()
@@ -185,17 +159,6 @@ if __name__ == "__main__":
     net2.load_state_dict(checkpoint['state_dict'])
     OA, AA, Kappa = eval_maskmodel(net2, test_loader, trainstart, trainend, 'test', args.model)
     print('OA:', OA)
-    logger.info('OA:%.7f', OA)
     print('AA:', AA)
-    logger.info('AA:%.7f', AA)
     print('Kappa:', Kappa)
-    logger.info('Kappa:%.7f', Kappa)
 
-
-    paintmask_predictlabel(all_loader, net2, ColorBoard, labels, savedir)
-
-    print('着色图生成完毕')
-    logger.info('着色图生成完毕')
-    end_time = datetime.datetime.now().strftime('%F %T')
-    print("程序结束运行时间：" + end_time)
-    logger.info("程序结束运行时间：" + end_time)
